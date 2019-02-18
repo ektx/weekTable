@@ -58,10 +58,11 @@ goBtn.addEventListener('click', function () {
                     case '前端时间':
                         let _time = new Date(_val).getTime()
                         obj['状态'] = Date.now() > _time ? '<b style="color: red">异常</b>' : '正常'
-                        console.log(val)
+                        break
+                    case '项目名称':
+                        console.log(_val)
+                        obj['项目'] = `<b>${_val}</b>`
                 }
-            } else {
-                obj['项目'] = `<b>${val}</b>`;
             }
         })
 
