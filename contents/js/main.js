@@ -1,7 +1,7 @@
-let goBtn = document.querySelector('.go-btn')
+const goBtn = document.querySelector('#js-go-btn')
 let textarea = document.querySelector('textarea')
 let tableBox = document.querySelector('.table-box')
-
+const copyBtn = document.getElementById('js-copy-btn')
 let tableHeader = []
 
 if (localStorage.int) {
@@ -60,7 +60,6 @@ goBtn.addEventListener('click', function () {
                         obj['状态'] = Date.now() > _time ? '<b style="color: red">异常</b>' : '正常'
                         break
                     case '项目名称':
-                        console.log(_val)
                         obj['项目'] = `<b>${_val}</b>`
                 }
             }
@@ -105,3 +104,18 @@ function generateThead () {
 
     return `<thead><tr><th>${html}</th></tr></thead>`
 }
+
+// 复制生成的内容
+copyBtn.addEventListener('click', function () {
+    let str = tableBox.innerHTML
+
+    function copyEvt (e) {
+        e.clipboardData.setData('text/html', str)
+        e.clipboardData.setData('text/plain', str)
+        e.preventDefault()
+    }
+    
+    document.addEventListener('copy', copyEvt)
+    document.execCommand('copy')
+    document.removeEventListener('copy', copyEvt)
+}, false)
