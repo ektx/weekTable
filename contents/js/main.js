@@ -1,8 +1,7 @@
 const goBtn = document.querySelector('#js-go-btn')
+const copyBtn = document.getElementById('js-copy-btn')
 let textarea = document.querySelector('textarea')
 let tableBox = document.querySelector('.table-box')
-const copyBtn = document.getElementById('js-copy-btn')
-let tableHeader = []
 
 if (localStorage.int) {
     textarea.value = localStorage.int
@@ -13,82 +12,68 @@ goBtn.addEventListener('click', function () {
     localStorage.int = textarea.value
 
     let projects = textarea.value.split(/\n{2,}/)
-    let projectArr = []
+    let projectObj = {}
+    let tableHeader = new Set(['项目名称', '状态', '项目进度'])
 
-    tableHeader = [
-        '项目',
-        '状态',
-        '进度'
-    ]
-
-    projects.forEach((item, index) => {
-        let arr = item.split(/\n/)
+    projects.forEach(pro => {
+        let lines = pro.split(/\r?\n/)
+        let key = ''
         let obj = {}
 
-        arr.forEach(val => {
-            if (/:|：/.test(val)) {
-                val = val.trim()
-                let _tem = val.trim().split(/:|：/)
-                let _label = _tem[0].trim()
-                let _val = _tem[1].trim()
-                
-                switch (_label) {
-                    case '前端':
-                        obj.f2e = [];
+        lines.forEach(line => {
+            let [title, ...inner] = line.split(/:|：/)
 
-                        if (/,|，|\s/.test(_val)) {
-                            _val.split(/,|，|\s/).forEach(name => {
-                                if (!tableHeader.includes(name)) {
-                                    tableHeader.push(name)
-                                }
-                                obj.f2e.push(name)
-                            })
-                        } else {
-                            if (!tableHeader.includes(_val)) {
-                                tableHeader.push(_val)
-                            }
-                            obj.f2e.push(_val)
-                        }
-                        break;
-                    
-                    case '项目进度':
-                    case '进度':
-                        obj['进度'] = _val;
-                        break;
-                    case '前端时间':
-                        let _time = new Date(_val).getTime()
-                        obj['状态'] = Date.now() > _time ? '<b style="color: red">异常</b>' : '正常'
-                        break
-                    case '项目名称':
-                        obj['项目'] = `<b>${_val}</b>`
-                }
-            }
+            inner = inner.join(':').trim()
+            title = title.trim()
+
+            if (title === '项目名称') key = inner
+            
+            obj[title] = inner
         })
 
-        projectArr.push( obj )
+        if (!Reflect.has(projectObj, key)) {
+            projectObj[key] = obj
+        }
     })
 
-    let thead = generateThead()
-    let tbody = generateTbody(projectArr)
+    let getHeadforKey = getHead('前端', projectObj)
+    // 合并表头
+    tableHeader = new Set([...tableHeader, ...getHeadforKey])
 
-    tableBox.innerHTML = `<table>${thead + tbody}</table>`
+    let theadHTML = generateThead( tableHeader )
+    let tbodyHTML = generateTbody(projectObj, tableHeader)
+
+    tableBox.innerHTML = `<table>${theadHTML + tbodyHTML}</table>`
 }, false)
 
-
-function generateTbody (arr) {
+/**
+ * 生成表格内容
+ * @param {Object} projects 项目对象
+ * @param {Set} heads 表头数组
+ */
+function generateTbody (projects, heads) {
     let html = ''
 
-    arr.forEach(item => {
+    Object.values(projects).forEach(pro => {
         html += '<tr>'
-        tableHeader.forEach(name => {
-            switch (name) {
-                case '项目':
-                case '进度':
-                case '状态':
-                    html += `<td>${item[name]}</td>`
-                    break
-                default:
-                    html += `<td>${item.f2e.includes(name) ? '●' : ''}</td>`
+        heads.forEach(key => {
+            if (Reflect.has(pro, key)) {
+                html += `<td>${pro[key]}</td>`
+            } else {
+                if (key === '状态') {
+                    let endDate = new Date(pro['上线时间'])
+                    let FEDDate = new Date(pro['前端时间'])
+
+                    if (endDate > FEDDate) {
+                        html += '<td>正常</td>'
+                    } else {
+                        html += '<td>异常</td>'
+                    }
+                } 
+                else {
+                    let isWork = pro['前端'].includes(key) ? '●':''
+                    html += `<td>${isWork}</td>`
+                }
             }
         })
         html += '</tr>'
@@ -97,12 +82,42 @@ function generateTbody (arr) {
     return `<tbody>${html}</tbody>`
 }
 
-function generateThead () {
-    let html = tableHeader.reduce((a, b) => {
+/**
+ * 生成表头
+ * @param {Array} arr 表头数据
+ */
+function generateThead (arr) {
+    let html = [...arr].reduce((a, b) => {
         return `${a}</th><th>${b}`
     })
 
     return `<thead><tr><th>${html}</th></tr></thead>`
+}
+
+/**
+ * 生成表头对象
+ * @param {String} key 指定生成表头内容
+ * @param {Object} obj 项目对象
+ */
+function getHead (key, obj) {
+    let data = new Set()
+
+    Object.values(obj).forEach(item => {
+        if (Reflect.has(item, key)) {
+            let inner = item[key]
+
+            // 如果有空格 分隔成多个
+            if (/\s+/.test(inner)) {
+                let _arr = inner.split(/\s+/)
+
+                _arr.forEach(val => data.add(val))
+            } else {
+                data.add(inner)
+            }
+        }
+    })
+
+    return data
 }
 
 // 复制生成的内容
