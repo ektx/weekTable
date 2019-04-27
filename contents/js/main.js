@@ -64,7 +64,7 @@ function generateTbody (projects, heads) {
                     let endDate = new Date(pro['上线时间'])
                     let FEDDate = new Date(pro['前端时间'])
 
-                    if (endDate > FEDDate) {
+                    if (endDate >= FEDDate) {
                         html += '<td>正常</td>'
                     } else {
                         html += '<td>异常</td>'
