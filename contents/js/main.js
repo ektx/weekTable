@@ -28,7 +28,7 @@ goBtn.addEventListener('click', function () {
 
             if (title === '项目名称') key = inner
             
-            obj[title] = inner
+            if(title) obj[title] = inner
         })
 
         if (!Reflect.has(projectObj, key)) {
@@ -55,6 +55,8 @@ function generateTbody (projects, heads) {
     let html = ''
 
     Object.values(projects).forEach(pro => {
+        if (!Object.keys(pro).length) return html += ''
+        
         html += '<tr>'
         heads.forEach(key => {
             if (Reflect.has(pro, key)) {
@@ -70,6 +72,10 @@ function generateTbody (projects, heads) {
                         html += '<td>异常</td>'
                     }
                 } 
+                else if (key === '项目进度') {
+                    let val = pro[key] || pro['进度']
+                    html += `<td>${val}</td>`
+                }
                 else {
                     let isWork = pro['前端'].includes(key) ? '●':''
                     html += `<td>${isWork}</td>`
